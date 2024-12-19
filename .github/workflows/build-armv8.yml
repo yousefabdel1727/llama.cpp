@@ -1,4 +1,4 @@
-name: Cross-compile for ARMv8
+name: Cross-compile for Android armeabi-v7a
 
 on:
   push:
@@ -23,14 +23,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential libcurl4-openssl-dev
 
-      - name: Set up Android NDK
-        id: setup_ndk
-        run: |
-          # Download and unzip the Android NDK
-          wget https://dl.google.com/android/repository/android-ndk-r25b-linux-x86_64.zip -O android-ndk.zip
-          unzip android-ndk.zip
-          export ANDROID_NDK=$(pwd)/android-ndk-r25b  # Update with latest NDK version
-          echo "ANDROID_NDK=$ANDROID_NDK" >> $GITHUB_ENV  # Ensure it's available for other steps
+      - name: Setup Android NDK
+        uses: nttld/setup-ndk@v1.5.0
+        with:
+          # You can specify the exact version you want to use (e.g., 'r25c' or the latest version)
+          ndk-version: 'r25c'  # Replace with your desired version (e.g., 'r25c')
+          # Optional, default is true: Add the NDK to the PATH
+          add-to-path: true
+          # Optional, default is false: Link the installed NDK to the Android SDK (if you're using an SDK as well)
+          link-to-sdk: false
+          # Optional, default is false: Use local cache on top of the tool cache for NDK installation
+          local-cache: false
+          
 
       - name: Build
         id: cmake_build
@@ -90,5 +94,5 @@ jobs:
         if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/master' ) || github.event.inputs.create_release == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          path: llama-${{ steps.tag.outputs.name }}-bin-android-armv7a.zip  # Consistent with previous step
-          name: llama-android-armv7a.zip  # Changed to match target ABI
+          path: llama-cpp-${{ steps.tag.outputs.name }}-bin-android-armv7a.zip  # Consistent with previous step
+          name: llama-cpp-android-armv7a.zip  # Changed to match target ABI
