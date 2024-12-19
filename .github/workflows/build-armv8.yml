@@ -7,27 +7,70 @@ on:
     branches: ["master"]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest  # Use GitHub's x86 runner to cross-compile
+  ubuntu-cmake-armv8:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Clone
+        id: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Set up dependencies
+      - name: Dependencies
+        id: depends
         run: |
-          # Install necessary dependencies including ARM cross-compiling tools
           sudo apt-get update
-          sudo apt-get install -y build-essential cmake crossbuild-essential-arm64
+          sudo apt-get install build-essential libcurl4-openssl-dev
 
-      - name: Build llama.cpp for ARMv8
+      - name: Build
+        id: cmake_build
         run: |
-          # Create a build directory
           mkdir build
           cd build
+          cmake .. -DLLAMA_FATAL_WARNINGS=ON -DLLAMA_CURL=ON -DGGML_RPC=ON -DBUILD_SHARED_LIBS=OFF
+          cmake --build . --config Release -j $(nproc)
 
-          # Cross-compile for ARMv8 using the aarch64 toolchain
-          cmake ..
+      - name: Test
+        id: cmake_test
+        run: |
+          cd build
+          ctest -L 'main|curl' --verbose --timeout 900
 
-          # Build the project (ARMv8 binaries will be generated)
-          make
+      - name: Test llama2c conversion
+        id: llama2c_test
+        run: |
+          cd build
+          echo "Fetch tokenizer"
+          wget https://huggingface.co/karpathy/tinyllamas/resolve/main/stories260K/tok512.bin
+          echo "Fetch llama2c model"
+          wget https://huggingface.co/karpathy/tinyllamas/resolve/main/stories260K/stories260K.bin
+          ./bin/llama-convert-llama2c-to-ggml --copy-vocab-from-model ./tok512.bin --llama2c-model stories260K.bin --llama2c-output-model stories260K.gguf
+          ./bin/llama-cli -m stories260K.gguf -p "One day, Lily met a Shoggoth" -n 500 -c 256
+
+      - name: Determine tag name
+        id: tag
+        shell: bash
+        run: |
+          BUILD_NUMBER="$(git rev-list --count HEAD)"
+          SHORT_HASH="$(git rev-parse --short=7 HEAD)"
+          if [[ "${{ env.BRANCH_NAME }}" == "master" ]]; then
+            echo "name=b${BUILD_NUMBER}" >> $GITHUB_OUTPUT
+          else
+            SAFE_NAME=$(echo "${{ env.BRANCH_NAME }}" | tr '/' '-')
+            echo "name=${SAFE_NAME}-b${BUILD_NUMBER}-${SHORT_HASH}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Pack artifacts
+        id: pack_artifacts
+        if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/master' ) || github.event.inputs.create_release == 'true' }}
+        run: |
+          cp LICENSE ./build/bin/
+          zip -r llama-${{ steps.tag.outputs.name }}-bin-ubuntu-x64.zip ./build/bin/*
+
+      - name: Upload artifacts
+        if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/master' ) || github.event.inputs.create_release == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          path: llama-${{ steps.tag.outputs.name }}-bin-ubuntu-x64.zip
+          name: llama-bin-ubuntu-x64.zip
