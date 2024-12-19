@@ -11,27 +11,45 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Clone
+      - name: Clone repository
         id: checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Dependencies
+      - name: Install dependencies
         id: depends
         run: |
           sudo apt-get update
-          sudo apt-get install build-essential libcurl4-openssl-dev
+          sudo apt-get install -y build-essential libcurl4-openssl-dev
+
+      - name: Set up Android NDK
+        id: setup_ndk
+        run: |
+          # Download and unzip the Android NDK
+          wget https://dl.google.com/android/repository/android-ndk-r25b-linux-x86_64.zip -O android-ndk.zip
+          unzip android-ndk.zip
+          export ANDROID_NDK=$(pwd)/android-ndk-r25b  # Update with latest NDK version
+          echo "ANDROID_NDK=$ANDROID_NDK" >> $GITHUB_ENV  # Ensure it's available for other steps
 
       - name: Build
         id: cmake_build
         run: |
           mkdir build
           cd build
-          cmake .. -DLLAMA_FATAL_WARNINGS=ON -DLLAMA_CURL=ON -DGGML_RPC=ON -DBUILD_SHARED_LIBS=OFF
+          cmake .. \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=armeabi-v7a \  # 32-bit ARMv8 (ARMv7)
+            -DANDROID_PLATFORM=android-28 \
+            -DCMAKE_C_FLAGS="-march=armv8-a" \  # armv8-a for 32-bit ARMv8
+            -DCMAKE_CXX_FLAGS="-march=armv8-a" \  # armv8-a for 32-bit ARMv8
+            -DLLAMA_FATAL_WARNINGS=ON \
+            -DLLAMA_CURL=ON \
+            -DGGML_RPC=ON \
+            -DBUILD_SHARED_LIBS=OFF
           cmake --build . --config Release -j $(nproc)
 
-      - name: Test
+      - name: Run tests
         id: cmake_test
         run: |
           cd build
@@ -41,9 +59,9 @@ jobs:
         id: llama2c_test
         run: |
           cd build
-          echo "Fetch tokenizer"
+          echo "Fetching tokenizer"
           wget https://huggingface.co/karpathy/tinyllamas/resolve/main/stories260K/tok512.bin
-          echo "Fetch llama2c model"
+          echo "Fetching llama2c model"
           wget https://huggingface.co/karpathy/tinyllamas/resolve/main/stories260K/stories260K.bin
           ./bin/llama-convert-llama2c-to-ggml --copy-vocab-from-model ./tok512.bin --llama2c-model stories260K.bin --llama2c-output-model stories260K.gguf
           ./bin/llama-cli -m stories260K.gguf -p "One day, Lily met a Shoggoth" -n 500 -c 256
@@ -66,11 +84,11 @@ jobs:
         if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/master' ) || github.event.inputs.create_release == 'true' }}
         run: |
           cp LICENSE ./build/bin/
-          zip -r llama-${{ steps.tag.outputs.name }}-bin-ubuntu-x64.zip ./build/bin/*
+          zip -r llama-${{ steps.tag.outputs.name }}-bin-android-armv7a.zip ./build/bin/*  # Changed name to match target ABI
 
       - name: Upload artifacts
         if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/master' ) || github.event.inputs.create_release == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          path: llama-${{ steps.tag.outputs.name }}-bin-ubuntu-x64.zip
-          name: llama-bin-ubuntu-x64.zip
+          path: llama-${{ steps.tag.outputs.name }}-bin-android-armv7a.zip  # Consistent with previous step
+          name: llama-android-armv7a.zip  # Changed to match target ABI
