@@ -40,8 +40,8 @@ jobs:
           cmake .. \
             -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
             -DANDROID_ABI=armeabi-v7a \
-            -DCMAKE_C_FLAGS="-march=armv8-a" \
-            -DCMAKE_CXX_FLAGS="-march=armv8-a $CXXFLAGS" \
+            -DCMAKE_C_FLAGS="-march=armv7-a" \
+            -DCMAKE_CXX_FLAGS="-march=armv7-a $CXXFLAGS" \
             -DLLAMA_FATAL_WARNINGS=ON \
             -DLLAMA_CURL=ON \
             -DGGML_RPC=ON \
