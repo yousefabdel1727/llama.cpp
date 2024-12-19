@@ -52,8 +52,8 @@ jobs:
         run: |
           mkdir build
           cd build
-          export CXXFLAGS="$CXXFLAGS -DNO_NEON -D__ARM_NEON=0"
-
+          export CXXFLAGS="$CXXFLAGS -DNO_NEON -D__ARM_NEON=1" # Force ARM NEON to be set to 1 to avoid redefinition
+          
           cmake .. \
             -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
             -DANDROID_ABI=armeabi-v7a \
