@@ -1,0 +1,31 @@
+name: Build on ARMv8
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    # This will use a GitHub-hosted runner for Ubuntu (x86_64 architecture)
+    # If you have a self-hosted ARMv8 runner, replace this line with:
+    runs-on: [self-hosted, arm64]
+    # runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up dependencies
+        run: |
+          # Install necessary dependencies
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
+
+      - name: Build llama.cpp
+        run: |
+          mkdir build
+          cd build
+          cmake ..
+          make
