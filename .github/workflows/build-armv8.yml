@@ -29,6 +29,12 @@ jobs:
         uses: ravinderjangra/android-ndk-toolchain-setup@0.2
         with:
           api: 28 # default is 21
+          arch:
+          install-location:
+          force: # optional, default is false
+          add-to-path: # optional, default is true
+    
+          
 
       - name: Build
         id: cmake_build
