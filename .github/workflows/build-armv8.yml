@@ -1,0 +1,40 @@
+name: Cross-compile for ARMv8
+
+on:
+  push:
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest  # Use GitHub's x86 runner to cross-compile
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up dependencies
+        run: |
+          # Install necessary dependencies including ARM cross-compiling tools
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake crossbuild-essential-arm64
+
+      - name: Build llama.cpp for ARMv8
+        run: |
+          # Create a build directory
+          mkdir build
+          cd build
+
+          # Cross-compile for ARMv8 using the aarch64 toolchain
+          cmake .. \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+            -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
+            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
+            -DCMAKE_C_FLAGS="-mfpu=neon -march=armv8-a" \
+            -DCMAKE_CXX_FLAGS="-mfpu=neon -march=armv8-a" \
+            -DCMAKE_BUILD_TYPE=Release
+
+          # Build the project (ARMv8 binaries will be generated)
+          make
