@@ -23,17 +23,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y build-essential libcurl4-openssl-dev
 
-      - name: Setup Android NDK
-        uses: nttld/setup-ndk@v1.5.0
-        with:
-          # You can specify the exact version you want to use (e.g., 'r25c' or the latest version)
-          ndk-version: 'r25c'  # Replace with your desired version (e.g., 'r25c')
-          # Optional, default is true: Add the NDK to the PATH
-          add-to-path: true
-          # Optional, default is false: Link the installed NDK to the Android SDK (if you're using an SDK as well)
-          link-to-sdk: false
-          # Optional, default is false: Use local cache on top of the tool cache for NDK installation
-          local-cache: false
+    - name: Set up Android NDK
+      uses: actions/setup-android@v2
+      with:
+        ndk-version: "r23b"
+
+    - name: Set up environment variables
+      run: |
+        export ANDROID_HOME=$HOME/Android/Sdk
+        export NDK_HOME=$ANDROID_HOME/ndk-bundle
+        export PATH=$NDK_HOME:$PATH
+        echo "NDK_HOME=$NDK_HOME"
           
 
       - name: Build
@@ -43,7 +43,7 @@ jobs:
           cd build
           cmake .. \
             -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
-            -DANDROID_ABI=armeabi-v7a \  # 32-bit ARMv8 (ARMv7)
+            -DANDROID_ABI=armeabi-v7a \
             -DANDROID_PLATFORM=android-28 \
             -DCMAKE_C_FLAGS="-march=armv8-a" \
             -DCMAKE_CXX_FLAGS="-march=armv8-a" \
