@@ -45,8 +45,8 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
             -DANDROID_ABI=armeabi-v7a \  # 32-bit ARMv8 (ARMv7)
             -DANDROID_PLATFORM=android-28 \
-            -DCMAKE_C_FLAGS="-march=armv8-a" \  # armv8-a for 32-bit ARMv8
-            -DCMAKE_CXX_FLAGS="-march=armv8-a" \  # armv8-a for 32-bit ARMv8
+            -DCMAKE_C_FLAGS="-march=armv8-a" \
+            -DCMAKE_CXX_FLAGS="-march=armv8-a" \
             -DLLAMA_FATAL_WARNINGS=ON \
             -DLLAMA_CURL=ON \
             -DGGML_RPC=ON \
