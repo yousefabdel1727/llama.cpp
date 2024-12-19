@@ -36,18 +36,21 @@ jobs:
         run: |
           mkdir build
           cd build
+          # Set CXXFLAGS to disable NEON optimizations (if unnecessary)
+          export CXXFLAGS="$CXXFLAGS -DNO_NEON"
+          
           cmake .. \
             -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
             -DANDROID_ABI=armeabi-v7a \
             -DCMAKE_C_FLAGS="-march=armv8-a" \
-            -DCMAKE_CXX_FLAGS="-march=armv8-a" \
+            -DCMAKE_CXX_FLAGS="-march=armv8-a $CXXFLAGS" \
             -DLLAMA_FATAL_WARNINGS=ON \
             -DLLAMA_CURL=ON \
             -DGGML_RPC=ON \
             -DBUILD_SHARED_LIBS=OFF \
             -DCURL_INCLUDE_DIR=/usr/include/curl \
             -DCURL_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurl.so \
-            -DTHREADS_PTHREAD_ARG=ON  # Explicitly enable pthread
+            -DTHREADS_PTHREAD_ARG=ON
           cmake --build . --config Release -j $(nproc)
 
       - name: Run tests
