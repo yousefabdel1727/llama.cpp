@@ -2,7 +2,12 @@ cmake_minimum_required(VERSION 3.14) # for add_link_options and implicit target 
 project("llama.cpp" C CXX)
 include(CheckIncludeFileCXX)
 
-set(ANDROID_ARM_NEON OFF)
+if(ANDROID_ABI STREQUAL "armeabi-v7a")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mfpu=vfpv3-d16")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfpu=vfpv3-d16")
+endif()
+
+#set(ANDROID_ARM_NEON OFF)
 
 #set(CMAKE_WARN_DEPRECATED YES)
 set(CMAKE_WARN_UNUSED_CLI YES)
