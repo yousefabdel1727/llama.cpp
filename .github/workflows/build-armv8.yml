@@ -27,14 +27,7 @@ jobs:
           cd build
 
           # Cross-compile for ARMv8 using the aarch64 toolchain
-          cmake .. \
-            -DCMAKE_SYSTEM_NAME=Linux \
-            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-            -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
-            -DCMAKE_C_FLAGS="-mfpu=neon -march=armv8-a" \
-            -DCMAKE_CXX_FLAGS="-mfpu=neon -march=armv8-a" \
-            -DCMAKE_BUILD_TYPE=Release
+          cmake ..
 
           # Build the project (ARMv8 binaries will be generated)
           make
