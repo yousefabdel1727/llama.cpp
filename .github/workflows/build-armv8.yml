@@ -24,10 +24,11 @@ jobs:
           sudo apt-get install -y build-essential libcurl4-openssl-dev
 
       - name: Android NDK toolchain Setup
-      - shell: bash
+        id: set_toolchains
         run: mkdir toolchains
       
       - name: specify NDK
+        id: android_ndk
         uses: ravinderjangra/android-ndk-toolchain-setup@0.2
         with:
           api: '21'
