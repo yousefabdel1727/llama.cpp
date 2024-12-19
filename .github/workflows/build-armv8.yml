@@ -21,22 +21,15 @@ jobs:
         id: depends
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential libcurl4-openssl-dev
+          sudo apt-get install -y build-essential libcurl4-openssl-dev libpthread-stubs0-dev
 
       - name: Setup Android NDK
-      # You may pin to the exact commit or the version.
-      # uses: nttld/setup-ndk@afb4c9964b521afb97c864b7d40b11e6911bd410
         uses: nttld/setup-ndk@v1.5.0
         with:
-          # Exact version to use
           ndk-version: "r25b"
-          # Add installation directory to the PATH
-          add-to-path: true # optional, default is true
-          # Add installed NDK to the Android SDK
-          link-to-sdk: false # optional, default is false
-          # Use the local job cache on top of the runner tool cache
-          local-cache: false # optional, default is false
-          
+          add-to-path: true
+          link-to-sdk: false
+          local-cache: false
 
       - name: Build
         id: cmake_build
@@ -51,7 +44,10 @@ jobs:
             -DLLAMA_FATAL_WARNINGS=ON \
             -DLLAMA_CURL=ON \
             -DGGML_RPC=ON \
-            -DBUILD_SHARED_LIBS=OFF
+            -DBUILD_SHARED_LIBS=OFF \
+            -DCURL_INCLUDE_DIR=/usr/include/curl \
+            -DCURL_LIBRARY=/usr/lib/x86_64-linux-gnu/libcurl.so \
+            -DTHREADS_PTHREAD_ARG=ON  # Explicitly enable pthread
           cmake --build . --config Release -j $(nproc)
 
       - name: Run tests
@@ -89,11 +85,11 @@ jobs:
         if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/master' ) || github.event.inputs.create_release == 'true' }}
         run: |
           cp LICENSE ./build/bin/
-          zip -r llama-${{ steps.tag.outputs.name }}-bin-android-armv7a.zip ./build/bin/*  # Changed name to match target ABI
+          zip -r llama-${{ steps.tag.outputs.name }}-bin-android-armv7a.zip ./build/bin/*
 
       - name: Upload artifacts
         if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/master' ) || github.event.inputs.create_release == 'true' }}
         uses: actions/upload-artifact@v4
         with:
-          path: llama-cpp-${{ steps.tag.outputs.name }}-bin-android-armv7a.zip  # Consistent with previous step
-          name: llama-cpp-android-armv7a.zip  # Changed to match target ABI
+          path: llama-cpp-${{ steps.tag.outputs.name }}-bin-android-armv7a.zip
+          name: llama-cpp-android-armv7a.zip
