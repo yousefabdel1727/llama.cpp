@@ -17,14 +17,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Cache Android NDK
-        uses: actions/cache@v3
-        with:
-          path: /usr/local/lib/android/sdk/ndk
-          key: ${{ runner.os }}-ndk-${{ hashFiles('**/build.gradle') }} # Adjust to use a relevant cache key based on project files
-          restore-keys: |
-            ${{ runner.os }}-ndk-
-
       - name: Install dependencies
         id: depends
         run: |
@@ -39,20 +31,11 @@ jobs:
           link-to-sdk: false
           local-cache: false
 
-      - name: Cache build directory
-        uses: actions/cache@v3
-        with:
-          path: /home/runner/work/llama.cpp/llama.cpp/build
-          key: ${{ runner.os }}-build-${{ hashFiles('CMakeLists.txt') }} # Cache based on project files like CMakeLists.txt
-          restore-keys: |
-            ${{ runner.os }}-build-
-
       - name: Build
         id: cmake_build
         run: |
           mkdir build
           cd build
-          export CXXFLAGS="$CXXFLAGS -DNO_NEON -D__ARM_NEON=1" # Force ARM NEON to be set to 1 to avoid redefinition
           
           cmake .. \
             -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
